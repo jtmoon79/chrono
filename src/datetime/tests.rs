@@ -560,7 +560,6 @@ fn test_datetime_rfc3339() {
         .to_rfc3339(),
         "2015-02-18T23:16:09.150+05:00"
     );
-
     assert_eq!(ymdhms_utc(2015, 2, 18, 23, 16, 9).to_rfc3339(), "2015-02-18T23:16:09+00:00");
     assert_eq!(
         ymdhms_milli(&edt5, 2015, 2, 18, 23, 16, 9, 150).to_rfc3339(),
@@ -583,51 +582,23 @@ fn test_datetime_rfc3339() {
         Ok(ymdhms_nano(&edt5, 2015, 2, 18, 23, 59, 59, 123_456_789))
     );
     assert_eq!(
+        ymdhms(&edt0, 2015, 2, 18, 23, 16, 9).to_rfc3339(),
+        "2015-02-18T23:16:09+00:00"
+    );
+    assert_eq!(
         DateTime::<FixedOffset>::parse_from_rfc3339("2015-02-18T23:16:09Z"),
         Ok(ymdhms(&edt0, 2015, 2, 18, 23, 16, 9))
     );
-
     assert_eq!(
-        ymdhms_micro(&edt5, 2015, 2, 18, 23, 59, 59, 1_234_567).to_rfc3339(),
-        "2015-02-19T00:00:00.234567+05:00"
-    );
-    assert_eq!(
-        ymdhms_milli(&edt5, 2015, 2, 18, 23, 16, 9, 150).to_rfc3339(),
-        "2015-02-18T23:16:09.150+05:00"
+        DateTime::<FixedOffset>::parse_from_rfc3339("2015-02-18T23:59:59.234567+05:00"),
+        Ok(ymdhms_micro(&edt5, 2015, 2, 18, 23, 59, 59, 234_567))
     );
     assert_eq!(
         DateTime::<FixedOffset>::parse_from_rfc3339("2015-02-18T00:00:00.234567+05:00"),
         Ok(ymdhms_micro(&edt5, 2015, 2, 18, 0, 0, 0, 234_567))
     );
-    assert_eq!(
-        DateTime::<FixedOffset>::parse_from_rfc3339("2015-02-18T23:16:09Z"),
-        Ok(ymdhms(&edt0, 2015, 2, 18, 23, 16, 9))
-    );
-    assert_eq!(
-        DateTime::<FixedOffset>::parse_from_rfc2822("Wed, 18 Feb 2015 23:59:60 +0500"),
-        Ok(edt5
-            .from_local_datetime(
-                &NaiveDate::from_ymd_opt(2015, 2, 18)
-                    .unwrap()
-                    .and_hms_milli_opt(23, 59, 59, 1_000)
-                    .unwrap()
-            )
-            .unwrap())
-    );
     assert!(DateTime::<FixedOffset>::parse_from_rfc2822("31 DEC 262143 23:59 -2359").is_err());
-    assert_eq!(
-        DateTime::<FixedOffset>::parse_from_rfc3339("2015-02-18T23:59:60.234567+05:00"),
-        Ok(edt5
-            .from_local_datetime(
-                &NaiveDate::from_ymd_opt(2015, 2, 18)
-                    .unwrap()
-                    .and_hms_micro_opt(23, 59, 59, 1_234_567)
-                    .unwrap()
-            )
-            .unwrap())
-    );
-    assert_eq!(ymdhms_utc(2015, 2, 18, 23, 16, 9).to_rfc3339(), "2015-02-18T23:16:09+00:00");
-
+    // is_err()
     assert!(
         DateTime::<FixedOffset>::parse_from_rfc3339("2015-02-18T23:59:60.234567 +05:00").is_err()
     );
@@ -814,6 +785,8 @@ fn test_parse_datetime_utc() {
         "2001-02-03T04:05:06-01 :00",
         "2001-02-03T04:05:06-01 : 00",
         "2012-12-12T12:12:12Z",
+        "2001-02-03T04:05:06-01:00",
+        "2012-12-12T12:12:12Z",
         "2015-02-18T23:16:09.153Z",
         "2015-2-18T23:16:09.153Z",
         "+2015-2-18T23:16:09.153Z",
@@ -929,6 +902,7 @@ fn test_utc_datetime_from_str() {
     assert_eq!(
         "2015-02-18T23:16:9.15UTC".parse::<DateTime<Utc>>(),
         Ok(ymdhms_milli_utc(2015, 2, 18, 23, 16, 9, 150))
+
     );
 
     assert_eq!(
