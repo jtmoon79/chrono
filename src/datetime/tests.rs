@@ -517,18 +517,6 @@ fn test_parse_datetime_utc() {
         "2001-02-03T04:05:06-00:00",
         "2001-02-03T04:05:06-01:00",
         "2012-12-12T12:12:12Z",
-        "2012 -12-12T12:12:12Z",
-        "2012  -12-12T12:12:12Z",
-        "2012- 12-12T12:12:12Z",
-        "2012-  12-12T12:12:12Z",
-        "2012-12-12T 12:12:12Z",
-        "2012-12-12T12 :12:12Z",
-        "2012-12-12T12  :12:12Z",
-        "2012-12-12T12: 12:12Z",
-        "2012-12-12T12:  12:12Z",
-        "2012-12-12T12 : 12:12Z",
-        "2012-12-12T12:12:12Z ",
-        " 2012-12-12T12:12:12Z",
         "2015-02-18T23:16:09.153Z",
         "2015-2-18T23:16:09.153Z",
         "+2015-2-18T23:16:09.153Z",
@@ -587,6 +575,18 @@ fn test_parse_datetime_utc() {
         "2012-12-12T12:12:12ZZ",    // trailing literal 'Z'
         "+802701-12-12T12:12:12Z",  // invalid year (out of bounds)
         "+ 2012-12-12T12:12:12Z",   // invalid space before year
+        "2012 -12-12T12:12:12Z",    // space after year
+        "2012  -12-12T12:12:12Z",   // multi space after year
+        "2012- 12-12T12:12:12Z",    // space after year divider
+        "2012-  12-12T12:12:12Z",   // multi space after year divider
+        "2012-12-12T 12:12:12Z",    // space after date-time divider
+        "2012-12-12T12 :12:12Z",    // space after hour
+        "2012-12-12T12  :12:12Z",   // multi space after hour
+        "2012-12-12T12: 12:12Z",    // space before minute
+        "2012-12-12T12:  12:12Z",   // multi space before minute
+        "2012-12-12T12 : 12:12Z",   // space space before and after hour-minute divider
+        "2012-12-12T12:12:12Z ",    // trailing space
+        " 2012-12-12T12:12:12Z",    // leading space
         "  +82701  -  05  -  6  T  15  :  9  : 60.898989898989   Z", // valid datetime, wrong format
     ];
     for &s in &invalid {
@@ -688,12 +688,23 @@ fn test_utc_datetime_from_str_with_spaces() {
     assert_eq!(Utc.datetime_from_str("Aug    09 2013 23:54:35", "%b    %d %Y %H:%M:%S"), Ok(dt),);
     assert_eq!(Utc.datetime_from_str("Aug  09 2013\t23:54:35", "%b  %d %Y\t%H:%M:%S"), Ok(dt),);
     assert_eq!(Utc.datetime_from_str("Aug  09 2013\t\t23:54:35", "%b  %d %Y\t\t%H:%M:%S"), Ok(dt),);
-    assert_eq!(Utc.datetime_from_str("Aug 09 2013 23:54:35 ", "%b %d %Y %H:%M:%S\n"), Ok(dt),);
-    assert_eq!(Utc.datetime_from_str("Aug 09 2013 23:54:35", "%b %d %Y\t%H:%M:%S"), Ok(dt),);
-    assert_eq!(Utc.datetime_from_str("Aug 09 2013 23:54:35", "%b %d %Y %H:%M:%S "), Ok(dt),);
-    assert_eq!(Utc.datetime_from_str("Aug 09 2013 23:54:35", " %b %d %Y %H:%M:%S"), Ok(dt),);
-    assert_eq!(Utc.datetime_from_str("Aug 09 2013 23:54:35", "%b %d %Y %H:%M:%S\n"), Ok(dt),);
     // with varying spaces - should fail
+    // leading whitespace in format
+    assert!(Utc.datetime_from_str("Aug 09 2013 23:54:35", " %b %d %Y %H:%M:%S").is_err());
+    // trailing whitespace in format
+    assert!(Utc.datetime_from_str("Aug 09 2013 23:54:35", "%b %d %Y %H:%M:%S ").is_err());
+    // extra mid-string whitespace in format
+    assert!(Utc.datetime_from_str("Aug 09 2013 23:54:35", "%b %d %Y  %H:%M:%S").is_err());
+    // mismatched leading whitespace
+    assert!(Utc.datetime_from_str("\tAug 09 2013 23:54:35", "\n%b %d %Y %H:%M:%S").is_err());
+    // mismatched trailing whitespace
+    assert!(Utc.datetime_from_str("Aug 09 2013 23:54:35 ", "%b %d %Y %H:%M:%S\n").is_err());
+    // mismatched mid-string whitespace
+    assert!(Utc.datetime_from_str("Aug 09 2013 23:54:35", "%b %d %Y\t%H:%M:%S").is_err());
+    // trailing whitespace in format
+    assert!(Utc.datetime_from_str("Aug 09 2013 23:54:35", "%b %d %Y %H:%M:%S ").is_err());
+    // trailing whitespace (newline) in format
+    assert!(Utc.datetime_from_str("Aug 09 2013 23:54:35", "%b %d %Y %H:%M:%S\n").is_err());
     // leading space in data
     assert!(Utc.datetime_from_str(" Aug 09 2013 23:54:35", "%b %d %Y %H:%M:%S").is_err());
     // trailing space in data
@@ -797,13 +808,11 @@ fn test_datetime_parse_from_str() {
         "%b %d %Y %H:%M:%S %z"
     )
     .is_err());
-    assert_eq!(
-        DateTime::<FixedOffset>::parse_from_str(
-            "Aug 09 2013 23:54:35 -09:00\n",
-            "%b %d %Y %H:%M:%S %z "
-        ),
-        Ok(dt),
-    );
+    assert!(DateTime::<FixedOffset>::parse_from_str(
+        "Aug 09 2013 23:54:35 -09:00\n",
+        "%b %d %Y %H:%M:%S %z "
+    )
+    .is_err());
     // trailing colon
     assert!(DateTime::<FixedOffset>::parse_from_str(
         "Aug 09 2013 23:54:35 -09:00:",
@@ -1163,13 +1172,11 @@ fn test_datetime_parse_from_str() {
         ),
         Ok(dt),
     );
-    assert_eq!(
-        DateTime::<FixedOffset>::parse_from_str(
-            "Aug 09 2013 23:54:35 -09: ",
-            "%b %d %Y %H:%M:%S %#z "
-        ),
-        Ok(dt),
-    );
+    assert!(DateTime::<FixedOffset>::parse_from_str(
+        "Aug 09 2013 23:54:35 -09: ",
+        "%b %d %Y %H:%M:%S %#z "
+    )
+    .is_err());
     assert_eq!(
         DateTime::<FixedOffset>::parse_from_str(
             "Aug 09 2013 23:54:35+-09",
@@ -1184,20 +1191,16 @@ fn test_datetime_parse_from_str() {
         ),
         Ok(dt),
     );
-    assert_eq!(
-        DateTime::<FixedOffset>::parse_from_str(
-            "Aug 09 2013 -09:00 23:54:35",
-            "%b %d %Y %#z%H:%M:%S"
-        ),
-        Ok(dt),
-    );
-    assert_eq!(
-        DateTime::<FixedOffset>::parse_from_str(
-            "Aug 09 2013 -0900 23:54:35",
-            "%b %d %Y %#z%H:%M:%S"
-        ),
-        Ok(dt),
-    );
+    assert!(DateTime::<FixedOffset>::parse_from_str(
+        "Aug 09 2013 -09:00 23:54:35",
+        "%b %d %Y %#z%H:%M:%S"
+    )
+    .is_err());
+    assert!(DateTime::<FixedOffset>::parse_from_str(
+        "Aug 09 2013 -0900 23:54:35",
+        "%b %d %Y %#z%H:%M:%S"
+    )
+    .is_err());
     assert_eq!(
         DateTime::<FixedOffset>::parse_from_str(
             "Aug 09 2013 -090023:54:35",
