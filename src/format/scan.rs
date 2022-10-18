@@ -219,9 +219,48 @@ pub(super) fn trim1(s: &str) -> &str {
     }
 }
 
-/// Consumes any number (including zero) of colon or spaces.
+/// Allow a colon with possible one-character whitespace padding.
+/// Consumes zero or one of these leading patterns:
+/// `":"`, `" "`, `" :"`, `": "`, or `" : "`.
 pub(super) fn colon_or_space(s: &str) -> ParseResult<&str> {
-    Ok(s.trim_left_matches(|c: char| c == ':' || c.is_whitespace()))
+    let c0s = match s.chars().next() {
+        Some(c) => c,
+        None => {
+            return Ok(s);
+        }
+    };
+    if c0s != ':' && !c0s.is_whitespace() {
+        return Ok(s);
+    }
+    let c1s = s.chars().nth(1);
+    match (c0s, c1s) {
+        (c0, None) if c0 == ':' || c0.is_whitespace() => {
+            return Ok(s_next(s));
+        }
+        (c0, Some(c1)) if c0 == ':' && c1.is_whitespace() => {
+            return Ok(s_next(s_next(s)));
+        }
+        (c0, Some(c1)) if c0 == ':' && !c1.is_whitespace() => {
+            return Ok(s_next(s));
+        }
+        (c0, Some(c1)) if c0.is_whitespace() && (!c1.is_whitespace() && c1 != ':') => {
+            return Ok(s_next(s));
+        }
+        _ => {}
+    }
+    let c2s = s.chars().nth(2);
+    match (c0s, c1s, c2s) {
+        (c0, Some(c1), None) if c0.is_whitespace() && c1 == ':' => Ok(s_next(s_next(s))),
+        (c0, Some(_), None) if c0.is_whitespace() => Ok(s_next(s)),
+        (c0, Some(c1), Some(c2)) if c0.is_whitespace() && c1 == ':' && !c2.is_whitespace() => {
+            Ok(s_next(s_next(s)))
+        }
+        (c0, Some(c1), Some(c2)) if c0.is_whitespace() && c1 == ':' && c2.is_whitespace() => {
+            Ok(s_next(s_next(s_next(s))))
+        }
+        (c0, Some(_), Some(_)) if c0.is_whitespace() => Ok(s_next(s)),
+        _ => Ok(s),
+    }
 }
 
 /// Tries to parse `[-+]\d\d` continued by `\d\d`. Return an offset in seconds if possible.
@@ -463,4 +502,40 @@ fn test_trim1() {
     assert_eq!(trim1("ab"), "ab");
     assert_eq!(trim1("😼"), "😼");
     assert_eq!(trim1("😼b"), "😼b");
+}
+
+#[test]
+fn test_colon_or_space() {
+    assert_eq!(colon_or_space(""), Ok(""));
+    assert_eq!(colon_or_space(" "), Ok(""));
+    assert_eq!(colon_or_space("\n"), Ok(""));
+    assert_eq!(colon_or_space("  "), Ok(" "));
+    assert_eq!(colon_or_space("   "), Ok("  "));
+    assert_eq!(colon_or_space("    "), Ok("   "));
+    assert_eq!(colon_or_space("\t\t\t\t"), Ok("\t\t\t"));
+    assert_eq!(colon_or_space(":"), Ok(""));
+    assert_eq!(colon_or_space(" :"), Ok(""));
+    assert_eq!(colon_or_space(": "), Ok(""));
+    assert_eq!(colon_or_space(" : "), Ok(""));
+    assert_eq!(colon_or_space(" :  "), Ok(" "));
+    assert_eq!(colon_or_space("  :"), Ok(" :"));
+    assert_eq!(colon_or_space("  : "), Ok(" : "));
+    assert_eq!(colon_or_space(" :: "), Ok(": "));
+    assert_eq!(colon_or_space(" : : "), Ok(": "));
+    assert_eq!(colon_or_space("😸"), Ok("😸"));
+    assert_eq!(colon_or_space("😸😸"), Ok("😸😸"));
+    assert_eq!(colon_or_space("😸:"), Ok("😸:"));
+    assert_eq!(colon_or_space("😸 "), Ok("😸 "));
+    assert_eq!(colon_or_space(" 😸"), Ok("😸"));
+    assert_eq!(colon_or_space(":😸"), Ok("😸"));
+    assert_eq!(colon_or_space(":😸 "), Ok("😸 "));
+    assert_eq!(colon_or_space(" :😸"), Ok("😸"));
+    assert_eq!(colon_or_space(" :😸 "), Ok("😸 "));
+    assert_eq!(colon_or_space(" :😸:"), Ok("😸:"));
+    assert_eq!(colon_or_space(": 😸"), Ok("😸"));
+    assert_eq!(colon_or_space(":  😸"), Ok(" 😸"));
+    assert_eq!(colon_or_space(": :😸"), Ok(":😸"));
+    assert_eq!(colon_or_space(" : 😸"), Ok("😸"));
+    assert_eq!(colon_or_space(" ::😸"), Ok(":😸"));
+    assert_eq!(colon_or_space(" :: 😸"), Ok(": 😸"));
 }
