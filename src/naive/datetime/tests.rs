@@ -268,7 +268,7 @@ fn test_datetime_from_str() {
         "+802701-123-12T12:12:12",       // out-of-bound year, invalid month
         "  +82701  -  05  -  6  T  15  :  9  : 60.898989898989   ", // many spaces
     ];
-    for &s in &invalid {
+    for &s in invalid.iter() {
         eprintln!("test_datetime_from_str invalid {:?}", s);
         assert!(s.parse::<NaiveDateTime>().is_err());
     }

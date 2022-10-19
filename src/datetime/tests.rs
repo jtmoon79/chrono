@@ -830,7 +830,7 @@ fn test_parse_datetime_utc() {
         "2001-02-03T04:05:06-01 :    :00", // invalid timezone spacing
         "  +82701  -  05  -  6  T  15  :  9  : 60.898989898989   Z", // valid datetime, wrong format
     ];
-    for &s in &invalid {
+    for &s in invalid.iter() {
         eprintln!("test_parse_datetime_utc invalid {:?}", s);
         assert!(s.parse::<DateTime<Utc>>().is_err());
     }
