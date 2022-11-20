@@ -21,6 +21,10 @@ use crate::format::{parse, ParseError, ParseResult, Parsed, StrftimeItems};
 use crate::format::{Fixed, Item, Numeric, Pad};
 use crate::naive::{Days, IsoWeek, NaiveDate, NaiveTime};
 use crate::{DateTime, Datelike, LocalResult, Months, TimeDelta, TimeZone, Timelike, Weekday};
+use core::cmp::Ordering;
+
+#[cfg(feature = "rustc-serialize")]
+pub(super) mod rustc_serialize;
 
 /// Tools to help serializing/deserializing `NaiveDateTime`s
 #[cfg(feature = "serde")]
