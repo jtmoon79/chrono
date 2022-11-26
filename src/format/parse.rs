@@ -452,14 +452,15 @@ where
                     | &TimezoneOffsetTripleColon
                     | &TimezoneOffset => {
                         s = scan::trim1(s);
-                        let offset = try_consume!(scan::timezone_offset(s, scan::colon_or_space));
+                        let offset =
+                            try_consume!(scan::timezone_offset(s, scan::maybe_colon_or_space));
                         parsed.set_offset(i64::from(offset)).map_err(|e| (s, e))?;
                     }
 
                     &TimezoneOffsetColonZ | &TimezoneOffsetZ => {
                         s = scan::trim1(s);
                         let offset =
-                            try_consume!(scan::timezone_offset_zulu(s, scan::colon_or_space));
+                            try_consume!(scan::timezone_offset_zulu(s, scan::maybe_colon_or_space));
                         parsed.set_offset(i64::from(offset)).map_err(|e| (s, e))?;
                     }
 
@@ -467,8 +468,10 @@ where
                         val: InternalInternal::TimezoneOffsetPermissive,
                     }) => {
                         s = scan::trim1(s);
-                        let offset =
-                            try_consume!(scan::timezone_offset_permissive(s, scan::colon_or_space));
+                        let offset = try_consume!(scan::timezone_offset_permissive(
+                            s,
+                            scan::maybe_colon_or_space
+                        ));
                         parsed.set_offset(i64::from(offset)).map_err(|e| (s, e))?;
                     }
 
