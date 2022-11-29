@@ -209,10 +209,6 @@ fn test_datetime_rfc2822() {
         Utc.with_ymd_and_hms(2015, 2, 18, 23, 16, 9).unwrap().to_rfc2822(),
         "Wed, 18 Feb 2015 23:16:09 +0000"
     );
-    assert_eq!(
-        Utc.with_ymd_and_hms(2015, 2, 18, 23, 16, 9).unwrap().to_rfc3339(),
-        "2015-02-18T23:16:09+00:00"
-    );
     // timezone +05
     assert_eq!(
         edt.from_local_datetime(
@@ -225,17 +221,6 @@ fn test_datetime_rfc2822() {
         .to_rfc2822(),
         "Wed, 18 Feb 2015 23:16:09 +0500"
     );
-    assert_eq!(
-        edt.from_local_datetime(
-            &NaiveDate::from_ymd_opt(2015, 2, 18)
-                .unwrap()
-                .and_hms_milli_opt(23, 16, 9, 150)
-                .unwrap()
-        )
-        .unwrap()
-        .to_rfc3339(),
-        "2015-02-18T23:16:09.150+05:00"
-    );
     // seconds 60
     assert_eq!(
         edt.from_local_datetime(
@@ -247,17 +232,6 @@ fn test_datetime_rfc2822() {
         .unwrap()
         .to_rfc2822(),
         "Wed, 18 Feb 2015 23:59:60 +0500"
-    );
-    assert_eq!(
-        edt.from_local_datetime(
-            &NaiveDate::from_ymd_opt(2015, 2, 18)
-                .unwrap()
-                .and_hms_micro_opt(23, 59, 59, 1_234_567)
-                .unwrap()
-        )
-        .unwrap()
-        .to_rfc3339(),
-        "2015-02-18T23:59:60.234567+05:00"
     );
 
     assert_eq!(
