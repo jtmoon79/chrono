@@ -585,6 +585,20 @@ fn test_datetime_rfc3339() {
         ymdhms(&edt0, 2015, 2, 18, 23, 16, 9).to_rfc3339(),
         "2015-02-18T23:16:09+00:00"
     );
+    // timezone +05
+    assert_eq!(
+        edt5.from_local_datetime(
+            &NaiveDate::from_ymd_opt(2015, 2, 18)
+                .unwrap()
+                .and_hms_milli_opt(23, 16, 9, 150)
+                .unwrap()
+        )
+        .unwrap()
+        .to_rfc3339(),
+        "2015-02-18T23:16:09.150+05:00"
+    );
+
+    assert_eq!(ymdhms_utc(2015, 2, 18, 23, 16, 9).to_rfc3339(), "2015-02-18T23:16:09+00:00");
     assert_eq!(
         DateTime::<FixedOffset>::parse_from_rfc3339("2015-02-18T23:16:09Z"),
         Ok(ymdhms(&edt0, 2015, 2, 18, 23, 16, 9))
@@ -902,7 +916,6 @@ fn test_utc_datetime_from_str() {
     assert_eq!(
         "2015-02-18T23:16:9.15UTC".parse::<DateTime<Utc>>(),
         Ok(ymdhms_milli_utc(2015, 2, 18, 23, 16, 9, 150))
-
     );
 
     assert_eq!(
